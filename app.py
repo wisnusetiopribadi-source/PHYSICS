@@ -79,4 +79,26 @@ if prompt := st.chat_input("Ketikkan pertanyaan Anda..."):
         st.markdown(prompt)
 
     # Kirim riwayat chat ke model dan dapatkan respons
-    with st
+    with st.chat_message("assistant"):
+        with st.spinner("Sedang memproses..."):
+            try:
+                # Siapkan riwayat chat untuk Gemini
+                gemini_history = [
+                    {"role": "user" if msg["role"] == "user" else "model", "parts": msg["parts"]}
+                    for msg in st.session_state.messages
+                ]
+                
+                # Menggunakan start_chat untuk memulai sesi baru dengan riwayat lengkap
+                chat_session = model.start_chat(history=gemini_history)
+                response = chat_session.send_message(prompt)
+                
+                # Tampilkan balasan
+                st.markdown(response.text)
+                
+                # Tambahkan balasan ke riwayat
+                st.session_state.messages.append({"role": "model", "parts": [response.text]})
+
+            except Exception as e:
+                st.error(f"Terjadi kesalahan: {e}")
+                # Hapus pesan terakhir jika terjadi error
+                st.session_state.messages.pop()
